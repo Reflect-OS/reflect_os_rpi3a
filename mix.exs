@@ -2,7 +2,7 @@ defmodule NervesSystemRpi3a.MixProject do
   use Mix.Project
 
   @github_organization "dtraft"
-  @app :reflect_os_rpi3a
+  @app :mirror_rpi3a
   @source_url "https://github.com/#{@github_organization}/#{@app}"
   @version Path.join(__DIR__, "VERSION")
            |> File.read!()
@@ -68,7 +68,7 @@ defmodule NervesSystemRpi3a.MixProject do
   defp deps do
     [
       {:nerves, "~> 1.11", runtime: false},
-      {:nerves_system_br, "1.28.3", runtime: false},
+      {:nerves_system_br, "1.28.1", runtime: false},
       {:nerves_toolchain_armv7_nerves_linux_gnueabihf, "~> 13.2.0", runtime: false},
       {:nerves_system_linter, "~> 0.4", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.22", only: :docs, runtime: false}
