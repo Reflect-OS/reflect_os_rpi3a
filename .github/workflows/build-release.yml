@@ -37,7 +37,7 @@ jobs:
           otp-version: 27
           elixir-version: 1.17.2
       - name: Install Nerves Bootstrap
-        run: mix archive.install hex nerves_bootstrap
+        run: mix archive.install hex nerves_bootstrap --force
       - run: mix deps.get
       - name: Restore Nerves Downloads
         id: restore-br-dependencies
