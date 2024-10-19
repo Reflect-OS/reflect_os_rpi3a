@@ -21,10 +21,10 @@ jobs:
       - run: mix deps.get
       - run: mix hex.build
       - name: Nerves br create build
-        run: ./deps/nerves_system_br/create-build.sh nerves_defconfig ~/temp_nerves_system
+        run: ./deps/nerves_system_br/create-build.sh nerves_defconfig temp_nerves_system
       - name: Make br dependencies
         run: make
-        working-directory: ~/temp_nerves_system
+        working-directory: temp_nerves_system
 
   build-system:
     runs-on: ubuntu-20.04
@@ -70,7 +70,7 @@ jobs:
   
   release-system:
     name: Release System
-    if: ${{ ! startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ github.ref == 'refs/branchs/main' }}
     environment: Release
     needs: [ build-system ]
     runs-on: ubuntu-20.04
