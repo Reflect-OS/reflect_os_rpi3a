@@ -11,6 +11,10 @@ This project follows the same versioning guidelines as [nerves_system_rpi3a](htt
    releases, and Linux kernel updates. They're also made to fix bugs and add
    features to the build infrastructure.
 
+## v0.1.2
+
+Test Release Notes
+
 ## v0.1.0
 
 This is the initial release.  It is simply a fork of [nerves_system_rpi3a](https://github.com/nerves-project/nerves_system_rpi3a) with the addition of the FBV library for showing the splash screen.

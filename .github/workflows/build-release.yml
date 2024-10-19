@@ -116,12 +116,15 @@ jobs:
           tag_name: v${{ steps.get-version.outputs.version}}
           body_path: deploy/system/RELEASE_NOTES
           files: deploy/system/artifacts/**
+      
+      - name: Fetch Dependencies
+        run: mix deps.get
 
       - name: Publish Package
         run: mix hex.publish --yes --dry-run
         env:
           HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
-          
+
   prepare-next-release:
     name: Prepare Next Release
     needs: [ release-system ]
