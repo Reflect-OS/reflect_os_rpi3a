@@ -1,0 +1,99 @@
+name: Build
+
+on:
+  push:
+
+jobs:
+  get-br-dependencies:
+    runs-on: ubuntu-20.04
+    name: Get BR Dependencies
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: 27
+          elixir-version: 1.17.2
+      - name: Cache Nerves Downloads
+        uses: actions/cache@v4
+        with:
+            path: ~/.nerves/dl
+            key: nerves-dl-${{ hashFiles('nerves_defconfig') }}
+      - run: mix deps.get
+      - run: mix hex.build
+      - name: Nerves br create build
+        run: ./deps/nerves_system_br/create-build.sh nerves_defconfig ~/temp_nerves_system
+      - name: Make br dependencies
+        run: make
+        working-directory: ~/temp_nerves_system
+
+  build-system:
+    runs-on: ubuntu-20.04
+    name: Build System
+    needs: [ get-br-dependencies ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: 27
+          elixir-version: 1.17.2
+      - run: mix deps.get
+      - name: Restore Nerves Downloads
+        id: restore-br-dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.nerves/dl
+          key: nerves-dl-${{ hashFiles('nerves_defconfig') }}
+      - name: Validate Hex Package
+        run: mix hex.build
+      - name: Build
+        run: mix compile
+      - name: Check Build
+        run: "[ -d .nerves ] || (echo 'VERSION file needs to be bumped or a config file needs to change to force a build'; exit 1)"
+      - name: Lint
+        run: mix nerves.system.lint nerves_defconfig
+      - name: Create artifact dir
+        run: mkdir -p deploy/system/artifacts
+      - name: Copy CHANGELOG
+        run: cp ./CHANGELOG.md deploy/system/CHANGELOG.md
+      - name: Create artifacts
+        run: mix nerves.artifact ${{github.repository}} --path deploy/system/artifacts
+      - name: Store Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nerves-system
+          path: deploy/system/artifacts
+      - name: Cache Nerves System
+        uses: actions/cache/save@v4
+        with:
+          path: deploy/system
+          key: deploy/system-${{github.sha}}-${{github.ref_name}}
+  
+  release-system:
+    name: Release System
+    if: ${{ ! startsWith(github.ref, 'refs/tags/v') }}
+    environment: Release
+    needs: [ build-system ]
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+    steps:
+      - name: Restore Nerves System
+        uses: actions/cache/restore@v4
+        with:
+          path: deploy/system
+          key: deploy/system-${{github.sha}}-${{github.ref_name}}
+
+      - name: Create release notes
+        run: grep -Pazo "(?s)(?<=## ${{github.ref_name}})[^#]+" deploy/system/CHANGELOG.md | sed '/./,$!d' > deploy/system/RELEASE_NOTES
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          body_path: deploy/system/RELEASE_NOTES
+          files: deploy/system/artifacts/**
+
+      
+      
+
+
+  
