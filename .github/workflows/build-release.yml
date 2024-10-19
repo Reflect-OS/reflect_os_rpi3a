@@ -89,6 +89,14 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: 27
+          elixir-version: 1.17.2
+
       - name: Restore Nerves System
         uses: actions/cache/restore@v4
         with:
@@ -105,11 +113,15 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          draft: true
           tag_name: v${{ steps.get-version.outputs.version}}
           body_path: deploy/system/RELEASE_NOTES
           files: deploy/system/artifacts/**
 
+      - name: Publish Package
+        run: mix hex.publish --yes --dry-run
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+          
   prepare-next-release:
     name: Prepare Next Release
     needs: [ release-system ]
