@@ -23,7 +23,7 @@ jobs:
       - name: Nerves br create build
         run: ./deps/nerves_system_br/create-build.sh nerves_defconfig temp_nerves_system
       - name: Make br dependencies
-        run: make
+        run: make source
         working-directory: temp_nerves_system
 
   build-system:
@@ -36,6 +36,8 @@ jobs:
         with:
           otp-version: 27
           elixir-version: 1.17.2
+      - name: Install Nerves Bootstrap
+        run: mix archive.install hex nerves_bootstrap
       - run: mix deps.get
       - name: Restore Nerves Downloads
         id: restore-br-dependencies
