@@ -66,7 +66,7 @@ jobs:
         env:
           REPO: ${{github.repository}}
         id: split-repo
-        run: echo "::set-output name=fragment::${REPO##*/}"
+        run: echo "fragment=${REPO##*/}" >> "$GITHUB_OUTPUT"
       - name: Create artifacts
         run: mix nerves.artifact ${{ steps.split-repo.outputs.fragment }} --path deploy/system/artifacts
       - name: Store Build Artifacts
@@ -82,7 +82,7 @@ jobs:
   
   release-system:
     name: Release System
-    if: ${{ github.ref == 'refs/branchs/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     environment: Release
     needs: [ build-system ]
     runs-on: ubuntu-20.04
@@ -95,23 +95,39 @@ jobs:
           path: deploy/system
           key: deploy/system-${{github.sha}}
       
-      - name: Set Version
-        id: set-version
-        run: echo "::set-output name=version::$(cat deploy/system/VERSION)"
+      - name: Get Version
+        id: get-version
+        run: echo "version=$(cat deploy/system/VERSION)" >> "$GITHUB_OUTPUT"
 
       - name: Create release notes
-        run: grep -Pazo "(?s)(?<=## v${{ steps.set-version.outputs.version }})[^#]+" deploy/system/CHANGELOG.md | sed '/./,$!d' > deploy/system/RELEASE_NOTES
+        run: grep -Pazo "(?s)(?<=## v${{ steps.get-version.outputs.version }})[^#]+" deploy/system/CHANGELOG.md | sed '/./,$!d' > deploy/system/RELEASE_NOTES
       
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          tag_name: v${{ steps.set-version.outputs.version}}
+          tag_name: v${{ steps.get-version.outputs.version}}
           body_path: deploy/system/RELEASE_NOTES
           files: deploy/system/artifacts/**
 
-      
-      
+  prepare-next-release:
+    name: Prepare Next Release
+    needs: [ release-system ]
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
+      - name: Get Next Version
+        id: get-next-version
+        run: echo "version=$(cat VERSION | awk -F. '{OFS="."; $NF+=1; print $0}')" >> "$GITHUB_OUTPUT"
 
-  
+      - name: Set Next Version
+        run: echo ${{ steps.get-next-version.outputs.version}} > VERSION
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Bump version for next release
