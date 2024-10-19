@@ -2,6 +2,9 @@ name: Build
 
 on:
   push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   get-br-dependencies:
@@ -17,7 +20,7 @@ jobs:
         uses: actions/cache@v4
         with:
             path: ~/.nerves/dl
-            key: nerves-dl-${{ hashFiles('nerves_defconfig') }}
+            key: nerves-dl-${{github.sha}}
       - run: mix deps.get
       - run: mix hex.build
       - name: Nerves br create build
@@ -44,7 +47,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ~/.nerves/dl
-          key: nerves-dl-${{ hashFiles('nerves_defconfig') }}
+          key: nerves-dl-${{github.sha}}
       - name: Validate Hex Package
         run: mix hex.build
       - name: Build
@@ -53,12 +56,19 @@ jobs:
         run: "[ -d .nerves ] || (echo 'VERSION file needs to be bumped or a config file needs to change to force a build'; exit 1)"
       - name: Lint
         run: mix nerves.system.lint nerves_defconfig
-      - name: Create artifact dir
+      - name: Create artifact directory
         run: mkdir -p deploy/system/artifacts
       - name: Copy CHANGELOG
         run: cp ./CHANGELOG.md deploy/system/CHANGELOG.md
+      - name: Copy VERSION
+        run: cp ./VERSION deploy/system/VERSION
+      - name: Split Repo name
+        env:
+          REPO: ${{github.repository}}
+        id: split-repo
+        run: echo "::set-output name=fragment::${REPO##*/}"
       - name: Create artifacts
-        run: mix nerves.artifact ${{github.repository}} --path deploy/system/artifacts
+        run: mix nerves.artifact ${{ steps.split-repo.outputs.fragment }} --path deploy/system/artifacts
       - name: Store Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -68,7 +78,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: deploy/system
-          key: deploy/system-${{github.sha}}-${{github.ref_name}}
+          key: deploy/system-${{github.sha}}
   
   release-system:
     name: Release System
@@ -83,14 +93,20 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: deploy/system
-          key: deploy/system-${{github.sha}}-${{github.ref_name}}
+          key: deploy/system-${{github.sha}}
+      
+      - name: Set Version
+        id: set-version
+        run: echo "::set-output name=version::$(cat deploy/system/VERSION)"
 
       - name: Create release notes
-        run: grep -Pazo "(?s)(?<=## ${{github.ref_name}})[^#]+" deploy/system/CHANGELOG.md | sed '/./,$!d' > deploy/system/RELEASE_NOTES
+        run: grep -Pazo "(?s)(?<=## v${{ steps.set-version.outputs.version }})[^#]+" deploy/system/CHANGELOG.md | sed '/./,$!d' > deploy/system/RELEASE_NOTES
+      
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
+          tag_name: v${{ steps.set-version.outputs.version}}
           body_path: deploy/system/RELEASE_NOTES
           files: deploy/system/artifacts/**
 
