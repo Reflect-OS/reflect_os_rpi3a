@@ -19,6 +19,12 @@ jobs:
           otp-version: 27
           elixir-version: 1.17.2
 
+      - name: Cache Nerves Downloads
+        uses: actions/cache/restore@v4
+        with:
+            path: ~/.nerves/dl
+            key: nerves-dl-${{github.sha}}
+
       - name: Restore Nerves System
         uses: actions/cache/restore@v4
         with:
