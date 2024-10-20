@@ -1,6 +1,6 @@
 # ReflectOS - Raspberry Pi 3 A+ and Zero 2 W
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/circleci/NZrYxpDbA5cc6r2JvZ4h5Y/VEDWsErd31SwWqpdSoMQBL/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/NZrYxpDbA5cc6r2JvZ4h5Y/VEDWsErd31SwWqpdSoMQBL/tree/main)
+[![Build](https://github.com/dtraft/mirror_rpi3a/actions/workflows/build.yml/badge.svg)](https://github.com/dtraft/mirror_rpi3a/actions/workflows/build.yml)
 
 This is the base ReflectOS Nerves System configuration for the Raspberry Pi 3 Model A+ and Zero 2 W
 with the USB port running in gadget mode.
