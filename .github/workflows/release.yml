@@ -22,7 +22,7 @@ jobs:
       - name: Restore Nerves Downloads For Release
         uses: actions/cache/restore@v4
         with:
-            path: ~/.nerves
+            path: ~/.nerves/dl
             key: nerves-release-${{github.sha}}
 
       - name: Restore Nerves System
@@ -30,12 +30,6 @@ jobs:
         with:
           path: deploy/system
           key: deploy/system-${{github.sha}}
-
-      - name: Install Nerves Bootstrap
-        run: mix archive.install hex nerves_bootstrap --force
-          
-      - name: Fetch Dependencies
-        run: mix deps.get
       
       - name: Get Version
         id: get-version
@@ -50,6 +44,12 @@ jobs:
           tag_name: v${{ steps.get-version.outputs.version}}
           body_path: deploy/system/RELEASE_NOTES
           files: deploy/system/artifacts/**
+
+      - name: Install Nerves Bootstrap
+        run: mix archive.install hex nerves_bootstrap --force
+            
+      - name: Fetch Dependencies
+        run: mix deps.get
       
       - name: Publish Package
         run: mix hex.publish --yes --dry-run

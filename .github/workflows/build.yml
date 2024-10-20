@@ -97,5 +97,5 @@ jobs:
       - name: Save Nerves Downloads For Release
         uses: actions/cache/save@v4
         with:
-            path: ~/.nerves
+            path: ~/.nerves/dl
             key: nerves-release-${{github.sha}}
