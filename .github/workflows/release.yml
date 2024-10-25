@@ -74,6 +74,9 @@ jobs:
       - name: Set Next Version
         run: echo ${{ steps.get-next-version.outputs.version}} > VERSION
 
+      - name: Prepare Changelog
+        run: sed -i '' -e '14s/^/## v${{ steps.get-next-version.outputs.version}}\r\n\r\n/' CHANGELOG.md
+
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Bump version for next release
